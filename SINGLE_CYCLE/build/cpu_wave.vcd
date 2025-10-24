@@ -1,0 +1,320 @@
+$date
+	Thu Oct 23 10:58:29 2025
+$end
+$version
+	Icarus Verilog
+$end
+$timescale
+	1ps
+$end
+$scope module tb_cpu $end
+$var reg 1 ! clk $end
+$var reg 1 " reset $end
+$scope module mycpu $end
+$var wire 32 # branch_target [31:0] $end
+$var wire 1 ! clk $end
+$var wire 1 " reset $end
+$var wire 1 $ reg_write $end
+$var wire 5 % reg_d [4:0] $end
+$var wire 5 & reg_b [4:0] $end
+$var wire 5 ' reg_a [4:0] $end
+$var wire 32 ( program_counter [31:0] $end
+$var wire 4 ) opcode [3:0] $end
+$var wire 13 * offset [12:0] $end
+$var wire 32 + memory_data [31:0] $end
+$var wire 1 , mem_write $end
+$var wire 1 - mem_read $end
+$var wire 32 . instruction [31:0] $end
+$var wire 32 / data_register_d [31:0] $end
+$var wire 32 0 data_register_b [31:0] $end
+$var wire 32 1 data_register_a [31:0] $end
+$var wire 1 2 branch $end
+$var wire 4 3 alu_type [3:0] $end
+$var wire 32 4 alu_output [31:0] $end
+$var wire 1 5 alu_operation_write_register $end
+$var reg 32 6 adress_data [31:0] $end
+$var reg 32 7 new_register_data [31:0] $end
+$scope module alu $end
+$var wire 32 8 reg_b [31:0] $end
+$var wire 32 9 reg_a [31:0] $end
+$var wire 4 : alu_ctrl [3:0] $end
+$var reg 32 ; result_value [31:0] $end
+$upscope $end
+$scope module control $end
+$var wire 1 $ write_register $end
+$var wire 1 , store_memory $end
+$var wire 4 < opcode [3:0] $end
+$var wire 1 - load_memory $end
+$var wire 1 2 branch $end
+$var wire 1 5 alu_operation $end
+$var reg 4 = alu_operation_type [3:0] $end
+$upscope $end
+$scope module decoder $end
+$var wire 5 > reg_d [4:0] $end
+$var wire 5 ? reg_b [4:0] $end
+$var wire 5 @ reg_a [4:0] $end
+$var wire 4 A opcode [3:0] $end
+$var wire 13 B offset [12:0] $end
+$var wire 32 C instruction [31:0] $end
+$upscope $end
+$scope module mem_data $end
+$var wire 32 D adress [31:0] $end
+$var wire 1 E clk $end
+$var wire 32 F data_memory_in [31:0] $end
+$var wire 32 G data_memory_out [31:0] $end
+$var wire 1 , store_instruction $end
+$upscope $end
+$scope module memory_ins $end
+$var wire 32 H instruction_out [31:0] $end
+$var wire 32 I program_counter [31:0] $end
+$upscope $end
+$scope module pc $end
+$var wire 1 2 branch $end
+$var wire 32 J branch_target [31:0] $end
+$var wire 1 ! clk $end
+$var wire 32 K pc_out [31:0] $end
+$var wire 1 " reset $end
+$var reg 32 L PC_reg [31:0] $end
+$upscope $end
+$scope module register_table $end
+$var wire 1 ! clk $end
+$var wire 32 M data_register_a [31:0] $end
+$var wire 32 N data_register_b [31:0] $end
+$var wire 32 O data_register_d_in [31:0] $end
+$var wire 32 P data_register_d_out [31:0] $end
+$var wire 5 Q register_a [4:0] $end
+$var wire 5 R register_b [4:0] $end
+$var wire 5 S register_d [4:0] $end
+$var wire 1 $ write_register_d $end
+$upscope $end
+$upscope $end
+$upscope $end
+$enddefinitions $end
+$comment Show the parameter values. $end
+$dumpall
+$end
+#0
+$dumpvars
+b11 S
+b10 R
+b1 Q
+b100 P
+b101 O
+b11 N
+b10 M
+b0 L
+b0 K
+bz J
+b0 I
+b100010000110000 H
+bx G
+b101 F
+zE
+bx D
+b100010000110000 C
+b0 B
+b0 A
+b1 @
+b10 ?
+b11 >
+b1 =
+b0 <
+b101 ;
+b1 :
+b10 9
+b11 8
+b101 7
+bx 6
+15
+b101 4
+b1 3
+02
+b10 1
+b11 0
+b100 /
+b100010000110000 .
+0-
+0,
+bx +
+b0 *
+b0 )
+b0 (
+b1 '
+b10 &
+b11 %
+1$
+bz #
+1"
+0!
+$end
+#5000
+b1000 7
+b1000 F
+b1000 O
+b1000 4
+b1000 ;
+b11 1
+b11 9
+b11 M
+b101 0
+b101 8
+b101 N
+b10 '
+b10 @
+b10 Q
+b11 &
+b11 ?
+b11 R
+b1 %
+b1 >
+b1 S
+b1000011000010000 .
+b1000011000010000 C
+b1000011000010000 H
+b100 (
+b100 I
+b100 K
+b100 L
+b10 /
+b10 P
+0"
+1!
+#10000
+0!
+#15000
+b110010011 +
+b110010011 G
+b0 4
+b0 ;
+b1 1
+b1 9
+b1 M
+b11 0
+b11 8
+b11 N
+b11 6
+b11 D
+b110010011 7
+b110010011 F
+b110010011 O
+b0 3
+b0 :
+b0 =
+b0 '
+b0 @
+b0 Q
+b10 &
+b10 ?
+b10 R
+b11 %
+b11 >
+b11 S
+1-
+05
+b1 )
+b1 <
+b1 A
+b10000110001 .
+b10000110001 C
+b10000110001 H
+b1000 (
+b1000 I
+b1000 K
+b1000 L
+b101 /
+b101 P
+1!
+#20000
+0!
+#25000
+b110010110 4
+b110010110 ;
+b11 1
+b11 9
+b11 M
+b110010011 0
+b110010011 8
+b110010011 N
+b110010110 7
+b110010110 F
+b110010110 O
+b1 3
+b1 :
+b1 =
+b10 '
+b10 @
+b10 Q
+b11 &
+b11 ?
+b11 R
+b1 %
+b1 >
+b1 S
+0-
+15
+b0 )
+b0 <
+b0 A
+b1000011000010000 .
+b1000011000010000 C
+b1000011000010000 H
+b1100 (
+b1100 I
+b1100 K
+b1100 L
+b1000 /
+b1000 P
+1!
+#30000
+0!
+#35000
+b0 4
+b0 ;
+bx 1
+bx 9
+bx M
+bx 0
+bx 8
+bx N
+x$
+b0 3
+b0 :
+b0 =
+bx *
+bx B
+bx '
+bx @
+bx Q
+bx &
+bx ?
+bx R
+bx %
+bx >
+bx S
+x-
+x5
+x2
+x,
+bx )
+bx <
+bx A
+bx .
+bx C
+bx H
+b10000 (
+b10000 I
+b10000 K
+b10000 L
+bx /
+bx P
+1!
+#40000
+0!
+#45000
+b10100 (
+b10100 I
+b10100 K
+b10100 L
+1!
+#50000
+0!
