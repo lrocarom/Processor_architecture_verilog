@@ -21,7 +21,7 @@ module cpu(input  wire clk,
     wire [3:0] alu_type;
     
     wire [31:0] memory_data;
-    wire reg_write, mem_write, mem_read, alu_operation_write_register, branch;
+    wire reg_write, mem_write_word, mem_read_word, alu_operation_write_register, branch;
     wire [3:0]  opcode;
     wire [4:0]  reg_a;
     wire [4:0]  reg_b;
@@ -53,8 +53,8 @@ module cpu(input  wire clk,
                             .alu_operation( alu_operation_write_register ),
                             .alu_operation_type(alu_type),
                             .write_register(reg_write),
-                            .load_memory(mem_read),
-                            .store_memory(mem_write),
+                            .load_word_memory(mem_read_word),
+                            .store_word_memory(mem_write_word),
                             .branch( branch )); 
 
     register_table register_table( .clk(clk),
@@ -73,23 +73,28 @@ module cpu(input  wire clk,
                .result_value( alu_output ));
 
 
-    always @(*) begin           
-        if (mem_write)
-            adress_data = data_register_d;
-        else if(mem_read)
-            adress_data = data_register_b;
+    always @(*) begin    //might change to clocked
+        adress_data  = data_register_b;   
     end
 
-    data_memory mem_data(.store_instruction (mem_write),
-                         .adress (adress_data),
-                         .data_memory_in (new_register_data),
+    data_memory mem_data(.clk(clk),
+                         .store_instruction (mem_write_word),
+                         .address (adress_data),
+                         .data_memory_in (data_register_d),
                          .data_memory_out (memory_data));
-    
-    always @(*) begin           
-        if (mem_read)
+
+
+    always @(*) begin   //might change to clocked
+        if (mem_read_word)
             new_register_data = memory_data;
         else if(alu_operation_write_register)
             new_register_data = alu_output;
+        
     end
+
+
+
+
+
 
 endmodule

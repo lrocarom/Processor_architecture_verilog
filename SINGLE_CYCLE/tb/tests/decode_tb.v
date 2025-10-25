@@ -21,7 +21,7 @@ module decode_tb;
     initial begin
         instr0 = 32'h00008610;
         instr1 = 32'h00008610;
-        instr2 = 32'h00001C670;
+        instr2 = 32'h0001C670;
         instr3 = 32'h00308193;
     end
 

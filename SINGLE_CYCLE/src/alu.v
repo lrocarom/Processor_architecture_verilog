@@ -12,6 +12,8 @@ module alu  (input wire [ 31 : 0 ] reg_a,
             4'b0010 : result_value = reg_a - reg_b; //SUB
             4'b0011 : result_value = reg_a & reg_b; //AND
             4'b0100 : result_value = reg_a | reg_b; //OR
+            4'b0101 : result_value = reg_a * reg_b; //MULT
+
             default: result_value = 0;
         endcase
     end

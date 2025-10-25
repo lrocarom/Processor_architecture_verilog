@@ -19,6 +19,7 @@ module tb_cpu;
     initial begin
         $dumpfile("build/cpu_wave.vcd");
         $dumpvars(0, tb_cpu);
+        $dumpvars(0, tb_cpu.mycpu.mem_data.data_mem[3]);
 
         // Reset CPU
         reset = 1;
@@ -30,8 +31,10 @@ module tb_cpu;
 
         #40
 
+        #70
+
         // Run simulation for a few cycles
-        repeat (10) @(posedge clk);
+        repeat (20) @(posedge clk);
 
         $finish;
     end

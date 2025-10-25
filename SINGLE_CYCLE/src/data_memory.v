@@ -1,7 +1,7 @@
 
-module data_memory(inout clk,
+module data_memory(input clk,
                    input  store_instruction,
-                   input  [31:0]  adress,
+                   input  [31:0]  address,
                    input  [31:0]  data_memory_in,
                    output [31:0]  data_memory_out);
     
@@ -14,11 +14,17 @@ module data_memory(inout clk,
         data_mem[3] = 32'h00000193;
     end
 
-    assign data_memory_out = data_mem[adress[6:0]];
+    assign data_memory_out = data_mem[address[6:0]];
 
     always @(posedge clk) begin
+
     if(store_instruction)
-        data_mem[adress[6:0]] <= data_memory_in;
+        data_mem[address[6:0]] <= data_memory_in;
+
+    if(store_instruction)
+            $display("STORING  VALUE %h and mem[%h]", data_memory_in,address[6:0]);
+
+
     end
 
 
