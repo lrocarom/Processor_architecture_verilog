@@ -20,11 +20,10 @@ module tb_cpu;
         $dumpfile("build/cpu_wave.vcd");
         $dumpvars(0, tb_cpu);
         $dumpvars(0, tb_cpu.mycpu.mem_data.data_mem[3]);
-
-        // Reset CPU
-        reset = 1;
-        #5 
         reset = 0;
+        // Reset CPU
+        #0
+        
         #10
 
         #20

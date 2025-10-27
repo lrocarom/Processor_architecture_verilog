@@ -6,8 +6,8 @@ module cpu(input  wire clk,
 
     wire [31:0] program_counter;
     wire [31:0] instruction;
-    wire [31:0] instruction_branch;
-    wire [31:0] branch_target;
+    wire [3:0]  branch_type_operation;
+    
 
 
     wire [31:0] data_register_a;
@@ -16,12 +16,13 @@ module cpu(input  wire clk,
     wire [31:0] alu_output;
 
     reg [31:0] adress_data;
+    
 
 
     wire [3:0] alu_type;
     
     wire [31:0] memory_data;
-    wire reg_write, mem_write_word, mem_read_word, alu_operation_write_register, branch;
+    wire reg_write, mem_write_word, mem_read_word, alu_operation_write_register, branch, jump, panic;
     wire [3:0]  opcode;
     wire [4:0]  reg_a;
     wire [4:0]  reg_b;
@@ -32,9 +33,12 @@ module cpu(input  wire clk,
 
 
     m_program_counter pc(   .clk (clk),
-                            .branch_target (branch_target),       // Dirección de PC desde fuera (por ejemplo, para saltos)
-                            .branch (branch),    
-                            .reset (reset),           // Señal para elegir si actualizar PC normal o salto
+                            .branch_target (offset),       // Dirección de PC desde fuera (por ejemplo, para saltos)
+                            .branch (branch),
+                            .jump_target(data_register_a),
+                            .jump (jump),   
+                            .reset (reset),
+                            .panic (panic),           // Señal para elegir si actualizar PC normal o salto
                             .pc_out (program_counter)
                             );
 
@@ -55,7 +59,10 @@ module cpu(input  wire clk,
                             .write_register(reg_write),
                             .load_word_memory(mem_read_word),
                             .store_word_memory(mem_write_word),
-                            .branch( branch )); 
+                            .branch( branch ),
+                            .branch_operation_type( branch_type_operation ),
+                            .jump( jump ),
+                            .panic( panic )); 
 
     register_table register_table( .clk(clk),
                         .register_a( reg_a ),
@@ -71,6 +78,11 @@ module cpu(input  wire clk,
                .reg_b( data_register_b ),
                .alu_ctrl( alu_type ),
                .result_value( alu_output ));
+
+    branch_comparision branch_comp( .branch_operation (branch_type_operation),
+                                    .data_register_a (data_register_a),
+                                    .data_register_b (data_register_b),
+                                    .branch (branch));
 
 
     always @(*) begin    //might change to clocked

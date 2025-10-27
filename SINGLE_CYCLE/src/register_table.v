@@ -23,8 +23,8 @@ module register_table(input          clk,
 
     initial begin
         data_register[0] = 32'h00000001;
-        data_register[1] = 32'h00000002;
-        data_register[2] = 32'h00000003;
+        data_register[1] = 32'h00000007;
+        data_register[2] = 32'h00000004;
         data_register[3] = 32'h00000004;
     end
 

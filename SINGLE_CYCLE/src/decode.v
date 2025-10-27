@@ -7,10 +7,13 @@ module decode_instruction(
     output wire [12:0] offset
 );
 
+
 assign opcode = instruction[3:0];
 assign reg_d  = instruction[8:4];
 assign reg_b  = instruction[13:9];
 assign reg_a  = instruction[18:14];
+
+//Check the bits of the offset for the set of instructions
 assign offset = instruction[31:19];
 
 endmodule
