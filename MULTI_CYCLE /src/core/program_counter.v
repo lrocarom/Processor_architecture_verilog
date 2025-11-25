@@ -6,16 +6,16 @@ module m_program_counter(
     input          jump,           // Jump control
     input          reset,
     input          panic, 
-    output [31:0]  pc_out         // Current PC
+    output wire [31:0]  pc_out         // Current PC
 );
-
+    wire [31:0]  pc_out_2;
     // Registro para PC
     reg [31:0] PC_reg;
     
     initial begin
         PC_reg = 0;
     end
-    
+
 
 
     always @(posedge clk or posedge reset) begin
@@ -32,6 +32,8 @@ module m_program_counter(
             PC_reg <= PC_reg + 4;
     end
 
+    assign pc_out_2 = PC_reg;
     assign pc_out = PC_reg;
+
 
 endmodule

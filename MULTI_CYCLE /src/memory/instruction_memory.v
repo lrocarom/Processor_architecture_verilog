@@ -7,10 +7,9 @@ module instruction_memory(input  [31:0]  program_counter,
 
 
     initial begin
-        instr_mem[0] = 32'h000044BB;
-        //instr_mem[0] = 32'h00004416;
-        instr_mem[1] = 32'h00000000;
-        instr_mem[2] = 32'h00000000;
+        instr_mem[0] = 32'h003100B3;  // ADD x1, x2, x3
+        instr_mem[1] = 32'h007303B3; // ADD x5, x6, x7
+        instr_mem[2] = 32'h00C585B3; // ADD x10, x11, x12
         instr_mem[3] = 32'h00004430;
         instr_mem[4] = 32'h00008610;
         instr_mem[5] = 32'h00000431;
