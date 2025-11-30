@@ -2,8 +2,8 @@ module decode_stage(
     input  clk,
     input  reset,
     input  wire [31:0] instruction,
-    output wire [4:0]  reg_a,
-    output wire [4:0]  reg_b,
+    output wire [4:0]  reg_rs1,
+    output wire [4:0]  reg_rs2,
     output wire [4:0]  reg_d,
     output wire alu_operation,
     output wire [3:0] alu_operation_type,
@@ -22,8 +22,8 @@ module decode_stage(
 
     decode_instruction decoder( .instruction( instruction ),
                                 .opcode( opcode ),
-                                .rs1( reg_a ),
-                                .rs2( reg_b ),
+                                .rs1( reg_rs1 ),
+                                .rs2( reg_rs2 ),
                                 .rd( reg_d ),
                                 .funct3( funct3 ),
                                 .funct7( funct7 ));

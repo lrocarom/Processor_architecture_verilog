@@ -1,13 +1,13 @@
 
 module register_table(input          clk,
                       input          reset,
-                      input  [4:0]  register_a,
-                      input  [4:0]  register_b,
+                      input  [4:0]  register_rs1,
+                      input  [4:0]  register_rs2,
                       input  [4:0]  register_d,
                       input  [31:0]  data_register_d_in,
                       input  write_register_d,
-                      output  [31:0]  data_register_a,
-                      output  [31:0]  data_register_b,
+                      output  [31:0]  data_register_rs1,
+                      output  [31:0]  data_register_rs2,
                       output  [31:0]  data_register_d_out
                       );
     
@@ -23,8 +23,8 @@ module register_table(input          clk,
         data_register[3] = 32'h00000004;
     end
 
-    assign data_register_a = data_register[register_a[4:0]];
-    assign data_register_b = data_register[register_b[4:0]];
+    assign data_register_rs1 = data_register[register_rs1[4:0]];
+    assign data_register_rs2 = data_register[register_rs2[4:0]];
     assign data_register_d_out = data_register[register_d[4:0]];
 
     always @(posedge clk or reset) begin

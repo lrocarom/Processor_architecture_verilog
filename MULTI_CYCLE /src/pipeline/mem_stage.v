@@ -7,7 +7,6 @@ module memory_stage(
     //signals from EX stage
     input  [31:0]  alu_result_in,           //address from ALU
     input  [31:0]  write_data_in,           //data to store in memory
-    input  [4:0]   rd_in,                   //register to write back to
 
     input is_load_in,                       //control signal
     input is_store_in,                      //control signal

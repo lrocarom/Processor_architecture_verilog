@@ -12,12 +12,12 @@ module cpu(input  wire clk,
     
     wire [3:0]  branch_type_operation;
     
-    wire [4:0]  reg_a;
-    wire [4:0]  reg_b;
+    wire [4:0]  reg_rs1;
+    wire [4:0]  reg_rs2;
     wire [4:0]  reg_d;
 
-    wire [31:0] data_register_a;
-    wire [31:0] data_register_b;
+    wire [31:0] data_register_rs1;
+    wire [31:0] data_register_rs2;
     wire [31:0] data_register_d;//NDEED TO DELETE?
     wire [31:0] alu_output;
 
@@ -35,10 +35,6 @@ module cpu(input  wire clk,
     reg [31:0] new_register_data;
     wire [12:0] offset;
 
-    wire [31:0] ex_data_a, ex_data_b, ex_data_d;
-    wire [3:0] ex_alu_type;
-    wire ex_write_reg, ex_load_mem, ex_store_mem, ex_branch, ex_jump, ex_panic;
-    wire [3:0] ex_branch_type;
 
     /***************************************************************************************************************/
     /*****************************************FETCH STAGE***********************************************************/
@@ -48,7 +44,7 @@ module cpu(input  wire clk,
     m_fetch fetch_stage(    .clk (clk),
                             .branch_target (offset),       // Dirección de PC desde fuera (por ejemplo, para saltos)
                             .branch (branch),
-                            .jump_target(data_register_a),
+                            .jump_target(data_register_rs1),
                             .jump (jump),   
                             .reset (reset),
                             .panic (panic),           // Señal para elegir si actualizar PC normal o salto
@@ -67,13 +63,17 @@ module cpu(input  wire clk,
     /*****************************************DECODE STAGE***********************************************************/
     /***************************************************************************************************************/
 
-    wire [4:0]  d_reg_d;
+    wire [4:0]  ex_reg_d;
+    wire [31:0] ex_data_rs1, ex_data_rs2, ex_data_d;
+    wire [3:0] ex_alu_type;
+    wire ex_write_reg, ex_load_mem, ex_store_mem, ex_branch, ex_jump, ex_panic;
+    wire [3:0] ex_branch_type;
 
     decode_stage decoder_stage(   .clk (clk),
                             .reset (reset),
                             .instruction( instruction_pipeline ),
-                            .reg_a( reg_a ),
-                            .reg_b( reg_b ),
+                            .reg_rs1( reg_rs1 ),
+                            .reg_rs2( reg_rs2 ),
                             .reg_d ( reg_d ),
                             .alu_operation( alu_operation_write_register ),
                             .alu_operation_type(alu_type),
@@ -88,8 +88,8 @@ module cpu(input  wire clk,
     id_register decoder_register (
         .clk(clk),
         .reset(reset),
-        .in_data_register_a(data_register_a),
-        .in_data_register_b(data_register_b),
+        .in_data_register_rs1(data_register_rs1),
+        .in_data_register_rs2(data_register_rs2),
         .in_data_register_d(data_register_d),
         .in_reg_d(reg_d),
         .in_alu_operation_type(alu_type),
@@ -100,10 +100,9 @@ module cpu(input  wire clk,
         .in_branch_operation_type(branch_type_operation),
         .in_jump(jump),
         .in_panic(panic),
-        .out_data_register_a(ex_data_a),
-        .out_data_register_b(ex_data_b),
-        .out_data_register_d(ex_data_d),
-        .out_reg_d(d_reg_d),
+        .out_data_register_rs1(ex_data_rs1),
+        .out_data_register_rs2(ex_data_rs2),
+        .out_reg_rd(ex_reg_d),
         .out_alu_operation_type(ex_alu_type),
         .out_write_register(ex_write_reg),
         .out_load_word_memory(ex_load_mem),
@@ -127,8 +126,8 @@ module cpu(input  wire clk,
 
 
     alu_stage alu_stage(    .clk (clk),
-                            .alu_op1 (ex_data_a),
-                            .alu_op2 (ex_data_b),
+                            .alu_op1 (ex_data_rs1),
+                            .alu_op2 (ex_data_rs2),
                             .alu_operation (ex_alu_type),
                             .is_write_in (ex_write_reg),
                             .is_store_in (ex_store_mem),
@@ -143,7 +142,7 @@ module cpu(input  wire clk,
                                 .is_load_in (ex_load_mem),
                                 .is_store_in (ex_store_mem),
                                 .alu_result_in (alu_output),
-                                .register_d_in (d_reg_d),
+                                .register_d_in (ex_reg_d),
                                 .is_write_out (m_write_reg),
                                 .is_load_out (m_load_mem),
                                 .is_store_out (m_store_mem),
@@ -170,22 +169,21 @@ module cpu(input  wire clk,
         .clk(clk),
         .reset(reset),
         .alu_result_in(m_alu_output),      // ALU result from EX stage
-        .write_data_in(m_write_reg), // Data to store (rs2)
+        .write_data_in(m_alu_output), // Data to store (rs2)
         .is_load_in(load_word_ex),       // control signal
         .is_store_in(m_load_mem),     // control signal
         .is_write_in(m_store_mem), // control signal
         .wb_data_out(wb_data_in)        // data read from memory
     );
 
-    memory_register mem_reg (
-                                .clk(clk),
+    memory_register mem_reg (   .clk(clk),
                                 .reset(reset),
-                                .new_register_data_in(wb_data_in),
+                                .wb_data_in(wb_data_in),
+                                .rd_in(m_register_d),
                                 .is_write_in(m_write_reg),
-                                .register_d_in(m_register_d),
-                                .new_register_data_out(wb_data_out),
-                                .is_write_out(wb_write_reg),
-                                .register_d_out(wb_register_d)
+                                .wb_data_out(wb_data_out),
+                                .rd_out(wb_register_d),
+                                .is_write_out(wb_write_reg)
                             );
 
     /***************************************************************************************************************/
@@ -193,31 +191,26 @@ module cpu(input  wire clk,
     /***************************************************************************************************************/
 
     
-    wb_register write_back_register_inst (
-        .clk(clk),
-        .reset(reset),
-        .new_register_data_in(wb_data_register_d), // from MEM stage
-        .is_write_in(is_write_mem),         // control signal from MEM stage
-        .register_d_in(rd_mem),             // destination register from MEM stage
-        .new_register_data_out(new_register_data_out), 
-        .is_write_out(is_write_out), 
-        .register_d_out(register_d_out)
-    );
-
-
-
-
-
+    // wb_register write_back_register_inst (
+    //     .clk(clk),
+    //     .reset(reset),
+    //     .new_register_data_in(m_alu_output), // from MEM stage
+    //     .is_write_in(is_write_mem),         // control signal from MEM stage
+    //     .register_d_in(m_register_d),             // destination register from MEM stage
+    //     .new_register_data_out(new_register_data_out), 
+    //     .is_write_out(is_write_out), 
+    //     .register_d_out(wb_register_d)
+    // );
     
     register_table register_table(  .clk(clk),
                                     .reset(reset),
-                                    .register_a( reg_a ),
-                                    .register_b( reg_b ),
+                                    .register_rs1( reg_rs1 ),
+                                    .register_rs2( reg_rs2 ),
                                     .register_d( wb_register_d ),
                                     .data_register_d_in( wb_data_out ),
                                     .write_register_d( reg_write ),
-                                    .data_register_a( data_register_a ),
-                                    .data_register_b( data_register_b ),
+                                    .data_register_rs1( data_register_rs1 ),
+                                    .data_register_rs2( data_register_rs2 ),
                                     .data_register_d_out ( data_register_d ));
 
 
@@ -225,8 +218,8 @@ module cpu(input  wire clk,
     // decode_stage decoder(   .clk (clk),
     //                                 .instruction( instruction ),
     //                                 .opcode( opcode ),
-    //                                 .reg_a( reg_a ),
-    //                                 .reg_b( reg_b ),
+    //                                 .reg_rs1( reg_rs1 ),
+    //                                 .reg_rs2( reg_rs2 ),
     //                                 .reg_d( reg_d ),
     //                                 .offset( offset ));
 
@@ -242,28 +235,28 @@ module cpu(input  wire clk,
     //                         .panic( panic )); 
 
     // register_table register_table( .clk(clk),
-    //                     .register_a( reg_a ),
-    //                     .register_b( reg_b ),
+    //                     .register_rs1( reg_rs1 ),
+    //                     .register_rs2( reg_rs2 ),
     //                     .register_d( reg_d ),
     //                     .data_register_d_in( new_register_data ),
     //                     .write_register_d( reg_write ),
-    //                     .data_register_a( data_register_a ),
-    //                     .data_register_b( data_register_b ),
+    //                     .data_register_rs1( data_register_rs1 ),
+    //                     .data_register_rs2( data_register_rs2 ),
     //                     .data_register_d_out ( data_register_d ));
 
-    // alu alu  ( .reg_a( data_register_a ),
-    //            .reg_b( data_register_b ),
+    // alu alu  ( .reg_rs1( data_register_rs1 ),
+    //            .reg_rs2( data_register_rs2 ),
     //            .alu_ctrl( alu_type ),
     //            .result_value( alu_output ));
 
     // branch_comparision branch_comp( .branch_operation (branch_type_operation),
-    //                                 .data_register_a (data_register_a),
-    //                                 .data_register_b (data_register_b),
+    //                                 .data_register_rs1 (data_register_rs1),
+    //                                 .data_register_rs2 (data_register_rs2),
     //                                 .branch (branch));
 
 
     // always @(*) begin    //might change to clocked
-    //     adress_data  = data_register_b;   
+    //     adress_data  = data_register_rs2;   
     // end
 
     // data_memory mem_data(.clk(clk),
