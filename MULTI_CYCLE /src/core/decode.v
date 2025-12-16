@@ -5,7 +5,9 @@ module decode_instruction(
     output wire [4:0]  rs2,
     output wire [4:0]  rd,
     output wire [2:0] funct3,
-    output wire [6:0] funct7    
+    output wire [6:0] funct7,
+    output wire [31:0] imm_i_type,
+    output wire [31:0] imm_s_type
 );
 
 
@@ -16,4 +18,6 @@ assign rs1    = instruction[19:15];
 assign rs2    = instruction[24:20];
 assign funct7 = instruction[31:25];
 
+assign imm_i_type = { {20{instruction[31]}}, instruction[31:20] };
+assign imm_s_type = { {20{instruction[31]}}, instruction[31:25], instruction[11:7] };
 endmodule

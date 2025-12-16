@@ -19,8 +19,13 @@ module register_table(input          clk,
     initial begin
         data_register[0] = 32'h00000001;
         data_register[1] = 32'h00000007;
-        data_register[2] = 32'h00000004;
+        data_register[2] = 32'h00000005;
         data_register[3] = 32'h00000004;
+        data_register[4] = 32'h00000001;
+        data_register[5] = 32'h00000004;
+        data_register[6] = 32'h00000012;
+        data_register[7] = 32'h00000013;
+        data_register[8] = 32'h00000014;
     end
 
     assign data_register_rs1 = data_register[register_rs1[4:0]];
