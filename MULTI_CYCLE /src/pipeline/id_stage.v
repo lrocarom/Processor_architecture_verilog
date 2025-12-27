@@ -5,6 +5,8 @@ module decode_stage(
     output wire [4:0]  reg_rs1,
     output wire [4:0]  reg_rs2,
     output wire [4:0]  reg_d,
+    output wire [31:0] imm_i_type,
+    output wire [31:0] imm_s_type,
     output wire alu_operation,
     output wire [3:0] alu_operation_type,
     output wire write_register,
@@ -16,6 +18,8 @@ module decode_stage(
     output wire panic
 
 );
+
+    
     wire [6:0]  opcode;
     wire [2:0] funct3;
     wire [6:0] funct7;
@@ -26,7 +30,9 @@ module decode_stage(
                                 .rs2( reg_rs2 ),
                                 .rd( reg_d ),
                                 .funct3( funct3 ),
-                                .funct7( funct7 ));
+                                .funct7( funct7 ),
+                                .imm_i_type(imm_i_type),
+                                .imm_s_type(imm_s_type));
 
     control_module control( .opcode( opcode ),
                         .funct3( funct3 ),      

@@ -13,6 +13,9 @@ module data_memory(input clk,
         data_mem[1] = 32'h00008610;
         data_mem[2] = 32'h00004430;
         data_mem[3] = 32'h00000193;
+        data_mem[4] = 32'h00001111;
+        data_mem[5] = 32'h00004555;
+        data_mem[6] = 32'h00000666;
     end
 
     assign data_memory_out = data_mem[address[6:0]];

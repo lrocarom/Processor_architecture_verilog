@@ -19,7 +19,10 @@ module tb_cpu;
     initial begin
         $dumpfile("build/cpu_wave.vcd");
         $dumpvars(0, tb_cpu);
-        // $dumpvars(0, tb_cpu.mycpu.mem_data.data_mem[3]);
+        $dumpvars(0, tb_cpu.mycpu.register_table.data_register[4]);
+        $dumpvars(0, tb_cpu.mycpu.register_table.data_register[7]);
+        $dumpvars(0, tb_cpu.mycpu.register_table.data_register[2]);
+        $dumpvars(0, tb_cpu.mycpu.register_table.data_register[6]);
         reset = 0;
         // Reset CPU
         #0
