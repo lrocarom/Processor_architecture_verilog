@@ -41,7 +41,8 @@ module data_cache (
     output [31:0] mem_addr,        // address to backing memory
     output [31:0] mem_wdata,       // data to backing memory
     input  [31:0] mem_rdata,       // data from backing memory
-    input         mem_ready        // currently unused (kept for future)
+    input         mem_ready  ,      // currently unused (kept for future)
+    output mem_cache_ready
 );
 
     // ==========================================================
@@ -262,7 +263,11 @@ module data_cache (
         mem_addr_r     = 32'd0;
         mem_wdata_r    = 32'd0;
 
-        if (state == STATE_MISS_WAIT) begin
+        if (state == STATE_IDLE) begin
+                mem_ready = 1'b1;
+        end
+        else if (state == STATE_MISS_WAIT) begin
+            mem_ready = 1'b0;
             // LOAD miss: return phase cycles 6..9 -> one word per cycle
             if (pend_is_load) begin
                 if (miss_counter >= 4'd5 && miss_counter <= 4'd8) begin
