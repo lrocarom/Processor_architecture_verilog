@@ -1,0 +1,181 @@
+This is a classic "Lost Data" bug in pipeline design.
+
+### The Bug: Address vs. Data
+
+In a Store instruction (like `sw x2, 8(x1)`), the CPU has two distinct jobs:
+
+1. **Calculate Where:** The ALU calculates the memory address (`x1 + 8`).
+2. **Provide What:** The Register File provides the data to be stored (`x2`).
+
+**The Error in your Code:**
+In `cpu.v`, you connected `m_alu_output` to both ports on the `mem_stage`.
+
+```verilog
+// cpu.v (Current Error)
+.alu_result_in(m_alu_output),  // Correct: This is the Address calculated by ALU
+.write_data_in(m_alu_output),  // WRONG: This is also the Address!
+
+```
+
+**The Result:** If you tried to execute `sw x2, 0(x1)` where `x1=100` and `x2=55`, 
+your CPU would write the value **100** into memory address **100**. It loses the value **55** entirely.
+
+---
+
+### The Fix: Create the "Store Data" Pipeline
+
+You need to carry the value of `rs2` (the data to be stored) from the Decode/Execute stage, 
+through the Pipeline Register, into the Memory stage.
+
+#### Step 1: Update `alu_register.v`
+
+You need to add a register to hold the "Store Data". This register just passes the value from input to output on the clock edge.
+
+*(I am inferring the structure of your `alu_register.v`, add these lines to it)*:
+
+```verilog
+module alu_register (
+    // ... existing inputs ...
+    input  [31:0] store_data_in,   // NEW: Input from EX stage (alu_op2_real)
+
+    // ... existing outputs ...
+    output reg [31:0] store_data_out // NEW: Output to MEM stage
+);
+
+    always @(posedge clk or posedge reset) begin
+        if (reset) begin
+            // ... existing resets ...
+            store_data_out <= 32'b0;
+        end else if (!in_stall) begin // Assuming you have stall logic here
+            // ... existing logic ...
+            store_data_out <= store_data_in; // Pass the data through
+        end
+    end
+endmodule
+
+```
+
+#### Step 2: Update `cpu.v` Instantiations
+
+Now you need to wire this new path in your top-level file.
+
+**A. Define a new wire for the data leaving the ALU pipeline:**
+
+```verilog
+    wire [31:0] m_store_data; // Carries the data to be written to memory
+
+```
+
+**B. Connect it to `alu_register`:**
+We use `alu_op2_real` as the input. This is important because `alu_op2_real` 
+contains the value of `rs2` **after** the Forwarding Unit has fixed it 
+(e.g., if the data was just calculated in the previous instruction).
+
+```verilog
+    alu_register alu_reg_inst ( 
+        .clk (clk),
+        .reset (reset),
+        // ... existing connections ...
+        
+        // NEW CONNECTIONS
+        .store_data_in (alu_op2_real),  // Input: The Corrected RS2 Value
+        .store_data_out(m_store_data)   // Output: Goes to MEM stage
+    );
+
+```
+
+**C. Connect it to `mem_stage`:**
+Now we fix the instantiation where the bug was found.
+
+```verilog
+    memory_stage mem_stage_inst (
+        .clk            (clk),
+        .reset          (reset),
+        
+        .alu_result_in  (m_alu_output),      // Address
+        
+        // FIX: Use the data we piped through, NOT the ALU result
+        .write_data_in  (m_store_data),      
+        
+        // ... rest of connections ...
+        .stall_req      (stall),             
+        .rd_out         (mem_rd_pass_through) 
+    );
+
+```
+
+### Summary of the Flow
+
+1. **EX Stage:** `alu_op2_real` holds the value of the register you want to store (handled by forwarding).
+2. **Pipeline Reg:** `alu_register` captures this value and holds it for one cycle.
+3. **MEM Stage:** `mem_stage` receives the address (from ALU) and the data (from `m_store_data`) and passes them correctly to the cache.
+
+
+
+new problem : 
+
+--- Simulation Start ---
+Expectation: High latency at start (Miss), then low latency (Hits).
+Time:                25000 | PC: 00000000 | Instr: 00000013 | Stall: 1 | Hit/Miss: MISS (Refilling)
+Time:                35000 | PC: 00000000 | Instr: 00000013 | Stall: 1 | Hit/Miss: MISS (Refilling)
+Time:                45000 | PC: 00000000 | Instr: 00000013 | Stall: 1 | Hit/Miss: MISS (Refilling)
+Time:                55000 | PC: 00000000 | Instr: 00000013 | Stall: 1 | Hit/Miss: MISS (Refilling)
+Time:                65000 | PC: 00000000 | Instr: 00000013 | Stall: 1 | Hit/Miss: MISS (Refilling)
+Time:                75000 | PC: 00000000 | Instr: 00000013 | Stall: 1 | Hit/Miss: MISS (Refilling)
+Time:                85000 | PC: 00000000 | Instr: 00000013 | Stall: 1 | Hit/Miss: MISS (Refilling)
+Time:                95000 | PC: 00000000 | Instr: 00000013 | Stall: 1 | Hit/Miss: MISS (Refilling)
+Time:               105000 | PC: 00000000 | Instr: 00000013 | Stall: 1 | Hit/Miss: MISS (Refilling)
+Time:               115000 | PC: 00000000 | Instr: 00000013 | Stall: 1 | Hit/Miss: MISS (Refilling)
+Time:               125000 | PC: 00000000 | Instr: 00000013 | Stall: 1 | Hit/Miss: MISS (Refilling)
+Time:               135000 | PC: 00000000 | Instr: 00a00093 | Stall: 0 | Hit/Miss:        HIT / RUN
+Time:               145000 | PC: 00000004 | Instr: 06402223 | Stall: 0 | Hit/Miss:        HIT / RUN
+Time:               155000 | PC: 00000008 | Instr: 06402103 | Stall: 0 | Hit/Miss:        HIT / RUN
+Time:               165000 | PC: 0000000c | Instr: 06802183 | Stall: 0 | Hit/Miss:        HIT / RUN
+Time:               175000 | PC: 00000010 | Instr: 00000013 | Stall: 1 | Hit/Miss: MISS (Refilling)
+Time:               185000 | PC: 00000010 | Instr: 00000013 | Stall: 1 | Hit/Miss: MISS (Refilling)
+Time:               195000 | PC: 00000010 | Instr: 00000013 | Stall: 1 | Hit/Miss: MISS (Refilling)
+Time:               205000 | PC: 00000010 | Instr: 00000013 | Stall: 1 | Hit/Miss: MISS (Refilling)
+Time:               215000 | PC: 00000010 | Instr: 00000013 | Stall: 1 | Hit/Miss: MISS (Refilling)
+Time:               225000 | PC: 00000010 | Instr: 00000013 | Stall: 1 | Hit/Miss: MISS (Refilling)
+Time:               235000 | PC: 00000010 | Instr: 00000013 | Stall: 1 | Hit/Miss: MISS (Refilling)
+Time:               245000 | PC: 00000010 | Instr: 00000013 | Stall: 1 | Hit/Miss: MISS (Refilling)
+Time:               255000 | PC: 00000010 | Instr: 00000013 | Stall: 1 | Hit/Miss: MISS (Refilling)
+Time:               265000 | PC: 00000010 | Instr: 00000013 | Stall: 1 | Hit/Miss: MISS (Refilling)
+[MEM] STORE: Addr=0xxxxxxxxx (Index    x) Val=0x00000000
+Time:               275000 | PC: 00000010 | Instr: 00000013 | Stall: 1 | Hit/Miss: MISS (Refilling)
+Time:               285000 | PC: 00000010 | Instr: 00310233 | Stall: 0 | Hit/Miss:        HIT / RUN
+Time:               295000 | PC: 00000014 | Instr: 0000006f | Stall: 0 | Hit/Miss:        HIT / RUN
+Time:               305000 | PC: 00000018 | Instr: 00000013 | Stall: 0 | Hit/Miss:        HIT / RUN
+Time:               315000 | PC: 00000000 | Instr: 00a00093 | Stall: 0 | Hit/Miss:        HIT / RUN
+Time:               325000 | PC: 00000004 | Instr: 06402223 | Stall: 0 | Hit/Miss:        HIT / RUN
+Time:               335000 | PC: 00000008 | Instr: 06402103 | Stall: 0 | Hit/Miss:        HIT / RUN
+Time:               345000 | PC: 0000000c | Instr: 06802183 | Stall: 0 | Hit/Miss:        HIT / RUN
+Time:               355000 | PC: 00000010 | Instr: 00310233 | Stall: 1 | Hit/Miss:        HIT / RUN
+Time:               365000 | PC: 00000014 | Instr: 0000006f | Stall: 1 | Hit/Miss:        HIT / RUN
+Time:               375000 | PC: 00000018 | Instr: 00000013 | Stall: 1 | Hit/Miss:        HIT / RUN
+Time:               385000 | PC: 00000000 | Instr: 00a00093 | Stall: 1 | Hit/Miss:        HIT / RUN
+Time:               395000 | PC: 00000004 | Instr: 06402223 | Stall: 1 | Hit/Miss:        HIT / RUN
+Time:               405000 | PC: 00000008 | Instr: 06402103 | Stall: 1 | Hit/Miss:        HIT / RUN
+Time:               415000 | PC: 0000000c | Instr: 06802183 | Stall: 1 | Hit/Miss:        HIT / RUN
+Time:               425000 | PC: 00000010 | Instr: 00310233 | Stall: 1 | Hit/Miss:        HIT / RUN
+Time:               435000 | PC: 00000014 | Instr: 0000006f | Stall: 1 | Hit/Miss:        HIT / RUN
+Time:               445000 | PC: 00000018 | Instr: 00000013 | Stall: 1 | Hit/Miss:        HIT / RUN
+[MEM] STORE: Addr=0xxxxxxxxx (Index    x) Val=0xbd5b7dde
+Time:               455000 | PC: 00000000 | Instr: 00a00093 | Stall: 0 | Hit/Miss:        HIT / RUN
+Time:               465000 | PC: 00000004 | Instr: 06402223 | Stall: 0 | Hit/Miss:        HIT / RUN
+Time:               475000 | PC: 00000008 | Instr: 06402103 | Stall: 0 | Hit/Miss:        HIT / RUN
+Time:               485000 | PC: 0000000c | Instr: 06802183 | Stall: 0 | Hit/Miss:        HIT / RUN
+Time:               495000 | PC: 00000010 | Instr: 00310233 | Stall: 1 | Hit/Miss:        HIT / RUN
+Time:               505000 | PC: 00000014 | Instr: 0000006f | Stall: 1 | Hit/Miss:        HIT / RUN
+Time:               515000 | PC: 00000018 | Instr: 00000013 | Stall: 1 | Hit/Miss:        HIT / RUN
+tb/cpu_new_tb.v:27: $finish called at 520000 (1ps)
+
+Look at Cycle 355,000.
+Instruction: ADD (Load-Use Hazard).
+Stall: 1 (The Hazard Unit correctly shouted "STOP!").
+PC Behavior: 
+The PC moved from 10 -> 14 -> 18 -> 00 while stalled.
+The Diagnosis: Your PC is listening to the Cache Stall (internal), but it is ignoring the Hazard Stall (external).
+
+Currently, your m_fetch module hardwires the PC stall to the cache only. 
+We need to tell m_fetch to also stall when the rest of the CPU (Hazard Unit) asks for it.
